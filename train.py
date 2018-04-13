@@ -58,7 +58,7 @@ net = tf.layers.dropout(net, dropout_rate_ph, training=is_training_ph)
 net = tf.layers.conv2d(net, num_variation_factor * num_input_images, 1,
                        bias_initializer=tf.zeros_initializer())
 logits_op = tf.squeeze(net, [1, 2])
-sigmoid_op = tf.nn.sigmoid(logits_op)
+sigmoid_op = tf.nn.relu(logits_op)
 input_images = tf.split(tf.reshape(inputs_ph, [input_size, input_size, num_channel * num_input_images]),
                         num_input_images, axis=2)
 
@@ -72,10 +72,11 @@ for i in range(len(input_images)):
     x_coord_idx = x_c_idx * (i * num_variation_factor)
     x_coord = sigmoid_op[x_coord_idx] * padding_input_size
     y_coord_idx = y_c_idx * (i * num_variation_factor)
-    y_coord = +sigmoid_op[y_coord_idx] * padding_input_size
+    y_coord = sigmoid_op[y_coord_idx] * padding_input_size
 
     tf.image.resize_images(input_images, [])
 
+# todo: chane loss for relu
 loss_op = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=labels_ph, logits=logits_op),
                          name="sigmoid_cross_entropy")
 

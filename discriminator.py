@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import tensorflow as tf
 import os
 import numpy as np
@@ -7,13 +8,30 @@ from random import shuffle
 
 
 def open_image(image_path):
-    return Image.open(image_path)
+    try:
+        im = Image.open(image_path)
+        return im.convert("RGB")
+    except:
+        return None
 
 
 def resize(img, width, height):
-    img = img.resize((width, height), Image.ANTIALIAS)
-    img = np.array(img)
-    return (img / 255 - 0.5) * 2
+    if img is None:
+        r = np.empty([height, width, 3])
+        r.fill(0.)
+        return r
+    try:
+        img = img.resize((width, height), Image.ANTIALIAS)
+        img = np.array(img)
+        if len(img.shape) == 2:
+            r = np.empty([height, width, 3])
+            r.fill(0.)
+            return r
+        return (img / 255 - 0.5) * 2
+    except:
+        r = np.empty([height, width, 3])
+        r.fill(0.)
+        return r
 
 
 use_regularizer = False
@@ -22,12 +40,12 @@ width = 160
 height = 225
 num_channels = 3
 num_classes = 2
-learning_rate = 0.01
+learning_rate = 0.1
 num_variation_factor = 1
 opt_epsilon = 1.
 rmsprop_momentum = 0.9
 rmsprop_decay = 0.9
-epochs = 10
+epochs = 1000
 x_c_idx = 0
 y_c_idx = 1
 w_idx = 2
@@ -87,18 +105,25 @@ validation_writer = tf.summary.FileWriter(summary_dir + '/validation')
 saver = tf.train.Saver(tf.global_variables())
 import glob
 
-imgs = glob.glob("F:\data\main_image\main_dabainsang\main_image/*")
+true_imgs = glob.glob("F:\data\imfgan\dimg\poster\downloads\movie poster image/*.jpg")
+false_imgs = glob.glob("F:\data\imfgan\dimg\\background\downloads\영화 장면/*.jpg")
 for i in range(epochs):
-    # shuffle(imgs)
-    for j in range(0, len(imgs), batch_size):
-        files = imgs[j:j + batch_size]
-        if len(files) < batch_size:
+    shuffle(true_imgs)
+    shuffle(false_imgs)
+    for j in range(0, 10, batch_size // 2):
+        true_files = true_imgs[j:j + batch_size // 2]
+        if len(true_files) < batch_size // 2:
             break
-        y_indices = [1] * (batch_size // 2) + [0] * (batch_size // 2)
-        shuffle(y_indices)
+        false_files = false_imgs[j:j + batch_size // 2]
+        if len(false_files) < batch_size // 2:
+            break
+        files = true_files + false_files
+        # y_indices = [1] * (batch_size // 2) + [0] * (batch_size // 2)
+        # shuffle(y_indices)
         batch_xs = np.array([resize(open_image(file), width, height) for file in files])
-        batch_ys = np.array([[1, 0] if k % 2 == 0 else [0, 1] for k, _ in enumerate(files)])
-
+        a = [[1, 0]] * (batch_size // 2)
+        b = [[0, 1]] * (batch_size // 2)
+        batch_ys = np.array(a + b)
         # im1 = resize(open_image("f:/2.jpg"), width, height)
         # im2 = resize(open_image("f:/1.jpg"), width, height)
         # if i % 2 == 0:
@@ -113,7 +138,7 @@ for i in range(epochs):
                        is_training_ph: True, dropout_rate_ph: 0.})
         print("loss", loss)
         print("accuracy", accuracy)
-        print("softmax", softmax)
-        print("logits", logits)
-
-        print("pred idx", pred_idx)
+        # print("softmax", softmax)
+        # print("logits", logits)
+        #
+        # print("pred idx", pred_idx)
