@@ -13,10 +13,10 @@ def resize(img, size):
     return np.array(img)
 
 
-input_width = 250
-input_height = 300
-output_width = 150
-output_height = 200
+input_width = 450
+input_height = 600
+output_width = 400
+output_height = 500
 
 # min_color_val = -1.
 min_color_val = 0.
