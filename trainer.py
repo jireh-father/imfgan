@@ -8,7 +8,8 @@ class Trainer:
         self.config = config
         self.dataset = Dataset(self.config)
         self.network = Network(config.batch_size, config.input_height, config.input_width, config.real_height,
-                               config.real_width, config.learning_rate, config.optimizer, config.optimizer_param)
+                               config.real_width, config.learning_rate, config.optimizer, config.optimizer_param,
+                               config.is_training)
 
         self._init_session()
 
@@ -25,26 +26,24 @@ class Trainer:
                 self.saver.restore(self.sess, ckpt.model_checkpoint_path)
                 print("Model restored")
 
+    def _summary(self, step, inputs, real_images):
+        g_loss_val, d_loss_val, summary_str = self.sess.run(
+            [self.network.generator_loss, self.network.discriminator_loss, self.summary_op],
+            feed_dict={self.network.input_ph: inputs, self.network.real_image_ph: real_images})
+        print("Step: %d, generator loss: %g, discriminatorloss: %g" % (step, g_loss_val, d_loss_val))
+        self.summary_writer.add_summary(summary_str, step)
+
+    def _save(self, i):
+        self.saver.save(self.sess, self.config.log_dir + "model.ckpt", global_step=i)
+
     def train(self):
-        try:
-            print("Train!!")
-            for itr in range(1, self.config.iterations):
-                inputs, real_images = self.dataset.batch()
-                self.network.train(self.sess, inputs, real_images)
+        print("Train!!")
+        for i in range(1, self.config.iterations):
+            inputs, real_images = self.dataset.batch()
+            self.network.train(self.sess, inputs, real_images)
 
-                if itr % 10 == 0:
-                    g_loss_val, d_loss_val, summary_str = self.sess.run(
-                        [self.gen_loss, self.discriminator_loss, self.summary_op], feed_dict=feed_dict)
-                    print("Step: %d, generator loss: %g, discriminator_loss: %g" % (itr, g_loss_val, d_loss_val))
-                    self.summary_writer.add_summary(summary_str, itr)
+            if i % self.config.summary_interval == 0:
+                self._summary(i, inputs, real_images)
 
-                if itr % 2000 == 0:
-                    self.saver.save(self.sess, self.logs_dir + "model.ckpt", global_step=itr)
-
-        except tf.errors.OutOfRangeError:
-            print('Done training -- epoch limit reached')
-        except KeyboardInterrupt:
-            print("Ending Training...")
-        finally:
-            self.coord.request_stop()
-            self.coord.join(self.threads)  # Wait for threads to finish.
+            if i % self.config.save_interval == 0:
+                self._save(i)

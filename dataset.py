@@ -10,7 +10,7 @@ class Dataset:
         self.bg_files = glob.glob(os.path.join(config.bg_dir, "*.jpg"))
         self.title_files = glob.glob(os.path.join(config.title_dir, "*.png"))
         self.credit_files = glob.glob(os.path.join(config.credit_dir, "*.png"))
-
+        return
         if not self.poster_files or not self.bg_files or not self.title_files or not self.credit_files:
             raise Exception("some dataset are empty.")
         if self.config.dataset_preload:
@@ -49,29 +49,19 @@ class Dataset:
 
     def _open_and_resize(self, image_file):
         img = Image.open(image_file)
-        return np.array(img.resize((self.config.input_width, self.config.input_height), Image.ANTIALIAS))
+        img = np.array(img.resize((self.config.input_width, self.config.input_height), Image.ANTIALIAS))
+        img /= 255
+        return (img - 0.5) * 2
+
+    def _preload(self, files, dataset):
+        for file in files:
+            try:
+                dataset.append(self._open_and_resize(file))
+            except:
+                continue
 
     def _preload_dataset(self):
-        for poster_file in self.poster_files:
-            try:
-                self.posters.append(self._open_and_resize(poster_file))
-            except:
-                continue
-
-        for bg_file in self.bg_files:
-            try:
-                self.bgs.append(self._open_and_resize(bg_file))
-            except:
-                continue
-
-        for title_file in self.title_files:
-            try:
-                self.titles.append(self._open_and_resize(title_file))
-            except:
-                continue
-
-        for credit_file in self.credit_files:
-            try:
-                self.credits.append(self._open_and_resize(credit_file))
-            except:
-                continue
+        self._preload(self.poster_files, self.posters)
+        self._preload(self.bg_files, self.bgs)
+        self._preload(self.credit_files, self.credits)
+        self._preload(self.title_files, self.titles)
