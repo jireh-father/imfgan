@@ -63,6 +63,7 @@ class Network:
         print(loss_val)
         print(var_list)
         grads = self.optimizer.compute_gradients(loss_val, var_list=var_list)
+        print(grads)
         for grad, var in grads:
             if grad is not None:
                 tf.summary.histogram(var.op.name + "/gradient", grad)
