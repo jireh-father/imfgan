@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import tensorflow as tf
 
 
@@ -45,24 +46,65 @@ class Generator:
             self._build_fake_image(inputs, logits, input_height, input_width, real_height, real_width)
 
     def _build_fake_image(self, inputs, logits, input_height, input_width, output_height, output_width):
-        output_r = tf.Variable(tf.zeros([1, output_height, output_width, 3], tf.float32), trainable=False)
+        # 1. 배경
+        # 2. 텍스트
+        # (1) 배경 리사이징
+        bg, title, credit = tf.split(inputs, [3, 4, 4], 3)
+        # bg, title, credit [batch, h, w, c]
+        # logits [batch, 10]
+        bg_x = tf.cast(logits[0][0] * (input_width - output_width), tf.int32)
+        bg_y = tf.cast(logits[0][1] * (input_height - output_height), tf.int32)
+        bg = tf.image.crop_to_bounding_box(bg, bg_y, bg_x, output_height, output_width)
 
-        inputs, _, _ = tf.split(inputs, [3, 4, 4], 3)
-        logits = tf.gather(logits[0], [0])
-        inputs = inputs * logits[0]
+        # title resize
+        title_w = tf.cast(logits[0][4] * (output_width - 1) + 1, tf.int32)
+        title_h = tf.cast(logits[0][5] * (output_height - 1) + 1, tf.int32)
+        title_x = tf.cast(logits[0][2] * output_width, tf.int32)
+        title_y = tf.cast(logits[0][3] * output_height, tf.int32)
+        title = tf.image.resize_images(title, (title_h, title_w))
+        title_crop_w = title_w - tf.nn.relu(title_x + title_w - output_width)
+        title_crop_h = title_h - tf.nn.relu(title_y + title_h - output_height)
+        title = tf.image.crop_to_bounding_box(title, 0, 0, title_crop_h, title_crop_w)
 
-        inputs = tf.image.crop_to_bounding_box(inputs, 0, 0, output_height + 10, output_width + 10)
-        inputs = tf.image.resize_images(inputs, (output_height, output_width))
+        # 3. (2) 텍스트 rgb 분리
+        # 4. (2) 텍스트 알파값 분리
+        title_rgb, title_a = tf.split(title, [3, 1], 3)
 
-        indices = tf.where(tf.equal(inputs, 1.0))
-        indices = tf.cast(indices, dtype=tf.int32)
-        print(output_r)
-        print(indices)
-        # self.fake_image = inputs + output_r[0][indices[0][0]][0][0]
-        # a = tf.concat(axis=0, values=[a[:i], [updated_value], a[i + 1:]])
-        output_r = tf.scatter_mul(output_r, indices, tf.gather(inputs, indices))
-        self.fake_image = output_r * inputs
-        return
+        # (4) 알파값 노말라이즈
+        title_a = (title_a - tf.reduce_min(title_a)) / tf.reduce_max(title_a) - tf.reduce_min(title_a)
+
+        # (3) 텍스트 rgb * (4) 알파값
+        title_rgb = title_rgb * title_a
+
+        # (3) 텍스트 rgb padding with 0 constant
+        print(title_rgb)
+        title_rgb = tf.pad(title_rgb, tf.constant([[0,0], [2, 2],[3,3],[0,0]]))
+        print(title_rgb)
+        sys.exit()
+
+        # 5. 알파값 리버스 = 1 - (4) 알파값
+        # (5) 알파값 (1) 배경 사이즈로 padding with 1 constant
+        # (1) 배경 *= (5) 알파값 리버스
+        # (1) 배경 += (3) 텍스트 rgb
+
+        # output_r = tf.Variable(tf.zeros([1, output_height, output_width, 3], tf.float32), trainable=False)
+        #
+        # inputs, _, _ = tf.split(inputs, [3, 4, 4], 3)
+        # logits = tf.gather(logits[0], [0])
+        # inputs = inputs * logits[0]
+        #
+        # inputs = tf.image.crop_to_bounding_box(inputs, 0, 0, output_height + 10, output_width + 10)
+        # inputs = tf.image.resize_images(inputs, (output_height, output_width))
+        #
+        # indices = tf.where(tf.equal(inputs, 1.0))
+        # indices = tf.cast(indices, dtype=tf.int32)
+        # print(output_r)
+        # print(indices)
+        # # self.fake_image = inputs + output_r[0][indices[0][0]][0][0]
+        # # a = tf.concat(axis=0, values=[a[:i], [updated_value], a[i + 1:]])
+        # output_r = tf.scatter_mul(output_r, indices, tf.gather(inputs, indices))
+        # self.fake_image = output_r * inputs
+        # return
         min_color_val = -1.
         output_r = tf.Variable(tf.zeros([output_width * output_height], tf.float32), trainable=False)
         output_g = tf.Variable(tf.zeros([output_width * output_height], tf.float32), trainable=False)
@@ -191,9 +233,13 @@ class Generator:
         output_g = tf.reshape(output_g, [output_height, output_width, 1])
         output_b = tf.reshape(output_b, [output_height, output_width, 1])
 
-        self.fake_image = tf.concat([output_r, output_g, output_b], axis=2)
+        # # self.fake_image = inputs + output_r[0][indices[0][0]][0][0]
+        tmp_output = tf.concat([output_r, output_g, output_b], axis=2)
+        self.fake_image = bg_img
+        # self.fake_image = tf.add(tf.multiply(bg_img, 0), tmp_output)
+        # self.fake_image = bg_img * 0 + tmp_output
 
     def generate(self):
-        return self.fake_image
-        # return tf.reshape(self.fake_image,
-        #                   [1, int(self.fake_image.get_shape()[0]), int(self.fake_image.get_shape()[1]), 3])
+        # return self.fake_image
+        return tf.reshape(self.fake_image,
+                          [1, int(self.fake_image.get_shape()[0]), int(self.fake_image.get_shape()[1]), 3])
