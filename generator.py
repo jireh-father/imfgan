@@ -78,7 +78,8 @@ class Generator:
 
         # (3) 텍스트 rgb padding with 0 constant
         print(title_rgb)
-        title_rgb = tf.pad(title_rgb, tf.constant([[0,0], [2, 2],[3,3],[0,0]]))
+        title_rgb = tf.pad(title_rgb, tf.constant([[0, 0], [title_y, output_height - (title_y + title_crop_h)],
+                                                   [title_x, output_width - (title_x + title_crop_w)], [0, 0]]))
         print(title_rgb)
         sys.exit()
 
