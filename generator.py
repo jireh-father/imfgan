@@ -31,7 +31,7 @@ class Generator:
                                    bias_initializer=bias_initializer(), kernel_regularizer=kernel_regularizer())
 
             net = tf.layers.conv2d(net, 256, [3, 3], name='conv5', padding='SAME', activation=tf.nn.relu,
-                                      bias_initializer=bias_initializer(), kernel_regularizer=kernel_regularizer())
+                                   bias_initializer=bias_initializer(), kernel_regularizer=kernel_regularizer())
 
             logits = tf.layers.conv2d(net, 1, [3, 3], name='conv6', padding='SAME', activation=tf.nn.sigmoid,
                                       bias_initializer=bias_initializer(), kernel_regularizer=kernel_regularizer())
@@ -68,7 +68,6 @@ class Generator:
         y_min = tf.minimum(idx_h)
         x_max = tf.maximum(idx_w)
         x_min = tf.minimum(idx_w)
-        x_start =
 
         print(idx)
         sys.exit()
