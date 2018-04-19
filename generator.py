@@ -14,41 +14,64 @@ class Generator:
             return tf.contrib.layers.l2_regularizer(0.00004)
 
         with tf.variable_scope("generator"):
-            net = tf.layers.conv2d(inputs, 64, [11, 11], 4, padding='VALID', name='conv1', activation=tf.nn.relu,
+            print(inputs)
+            # net = tf.layers.conv2d(inputs, 64, [11, 11], 4, padding='VALID', name='conv1', activation=tf.nn.relu,
+            #                        bias_initializer=bias_initializer(), kernel_regularizer=kernel_regularizer())
+            net = tf.layers.conv2d(inputs, 64, [5, 5], 2, padding='SAME', name='conv1', activation=tf.nn.relu,
                                    bias_initializer=bias_initializer(), kernel_regularizer=kernel_regularizer())
-            net = tf.layers.max_pooling2d(net, [3, 3], 2, name='pool1')
+            # net = tf.layers.max_pooling2d(net, [3, 3], 2, name='pool1')
 
-            net = tf.layers.conv2d(net, 192, [5, 5], name='conv2', padding='SAME', activation=tf.nn.relu,
+            net = tf.layers.conv2d(net, 192, [3, 3], name='conv2', padding='SAME', activation=tf.nn.relu,
                                    bias_initializer=bias_initializer(), kernel_regularizer=kernel_regularizer())
-            net = tf.layers.max_pooling2d(net, [3, 3], 2, name='pool2')
+            # net = tf.layers.max_pooling2d(net, [3, 3], 2, name='pool2')
 
             net = tf.layers.conv2d(net, 384, [3, 3], name='conv3', padding='SAME', activation=tf.nn.relu,
                                    bias_initializer=bias_initializer(), kernel_regularizer=kernel_regularizer())
             net = tf.layers.conv2d(net, 384, [3, 3], name='conv4', padding='SAME', activation=tf.nn.relu,
                                    bias_initializer=bias_initializer(), kernel_regularizer=kernel_regularizer())
-            net = tf.layers.conv2d(net, 256, [3, 3], name='conv5', padding='SAME', activation=tf.nn.relu,
-                                   bias_initializer=bias_initializer(), kernel_regularizer=kernel_regularizer())
-            net = tf.layers.max_pooling2d(net, [3, 3], 2, name='pool5')
-            net = tf.layers.conv2d(net, 4096, [int(net.get_shape()[1]), int(net.get_shape()[2])], padding='VALID',
-                                   name='fc6', activation=tf.nn.relu,
-                                   kernel_initializer=kernel_initializer(), bias_initializer=bias_initializer(),
-                                   kernel_regularizer=kernel_regularizer())
-            net = tf.layers.dropout(net, 0.5, training=is_training, name='dropout6')
-            net = tf.layers.conv2d(net, 4096, [1, 1], name='fc7', activation=tf.nn.relu, padding='SAME',
-                                   kernel_initializer=kernel_initializer(), bias_initializer=bias_initializer(),
-                                   kernel_regularizer=kernel_regularizer())
-            net = tf.layers.dropout(net, 0.5, training=is_training, name='dropout7')
 
-            net = tf.layers.conv2d(net, num_classes, [1, 1], kernel_initializer=kernel_initializer(),
-                                   bias_initializer=tf.zeros_initializer(), name='fc8', padding='SAME',
-                                   kernel_regularizer=kernel_regularizer())
-            logits = tf.squeeze(net, [1, 2], name='fc8/squeezed')
+            net = tf.layers.conv2d(net, 256, [3, 3], name='conv5', padding='SAME', activation=tf.nn.relu,
+                                      bias_initializer=bias_initializer(), kernel_regularizer=kernel_regularizer())
+
+            logits = tf.layers.conv2d(net, 1, [3, 3], name='conv6', padding='SAME', activation=tf.nn.sigmoid,
+                                      bias_initializer=bias_initializer(), kernel_regularizer=kernel_regularizer())
+
+            # print(net)
+            # sys.exit()
+            # net = tf.layers.max_pooling2d(net, [3, 3], 2, name='pool5')
+            # net = tf.layers.conv2d(net, 4096, [int(net.get_shape()[1]), int(net.get_shape()[2])], padding='VALID',
+            #                        name='fc6', activation=tf.nn.relu,
+            #                        kernel_initializer=kernel_initializer(), bias_initializer=bias_initializer(),
+            #                        kernel_regularizer=kernel_regularizer())
+            # net = tf.layers.dropout(net, 0.5, training=is_training, name='dropout6')
+            # net = tf.layers.conv2d(net, 4096, [1, 1], name='fc7', activation=tf.nn.relu, padding='SAME',
+            #                        kernel_initializer=kernel_initializer(), bias_initializer=bias_initializer(),
+            #                        kernel_regularizer=kernel_regularizer())
+            # net = tf.layers.dropout(net, 0.5, training=is_training, name='dropout7')
+            #
+            # net = tf.layers.conv2d(net, num_classes, [1, 1], kernel_initializer=kernel_initializer(),
+            #                        bias_initializer=tf.zeros_initializer(), name='fc8', padding='SAME',
+            #                        kernel_regularizer=kernel_regularizer())
+            # logits = tf.squeeze(net, [1, 2], name='fc8/squeezed')
             self._build_fake_image(inputs, logits, input_height, input_width, real_height, real_width)
 
     def _build_fake_image(self, inputs, logits, input_height, input_width, output_height, output_width):
         # 1. 배경
         # 2. 텍스트
         # (1) 배경 리사이징
+        logits = tf.image.resize_images(logits, (output_height, output_width))
+        print(logits)
+        sys.exit()
+        idx = tf.where(logits > 0.5)
+        _, idx_h, idx_w, idx_c = tf.split(idx, 4, 1)
+        y_max = tf.maximum(idx_h)
+        y_min = tf.minimum(idx_h)
+        x_max = tf.maximum(idx_w)
+        x_min = tf.minimum(idx_w)
+        x_start =
+
+        print(idx)
+        sys.exit()
         bg, title, credit = tf.split(inputs, [3, 4, 4], 3)
         # bg, title, credit [batch, h, w, c]
         # logits [batch, 10]
