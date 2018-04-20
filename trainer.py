@@ -1,15 +1,18 @@
 from dataset import Dataset
 from network import Network
 import tensorflow as tf
+from env import Env
+import numpy as np
 
 
 class Trainer:
     def __init__(self, config):
+        config.batch_size = 1
         self.config = config
-        self.dataset = Dataset(self.config)
-        self.network = Network(config.batch_size, config.input_height, config.input_width, config.real_height,
-                               config.real_width, config.learning_rate, config.optimizer, config.optimizer_param,
-                               config.is_training)
+        self.dataset = Dataset(config)
+        self.env = Env()
+        self.network = Network(config.input_height, config.input_width, config.real_height, config.real_width,
+                               config.learning_rate, config.optimizer, config.optimizer_param, config.is_training)
 
         self._init_session()
 
@@ -38,12 +41,19 @@ class Trainer:
 
     def train(self):
         print("Train!!")
-        for i in range(1, self.config.iterations):
-            inputs, real_images = self.dataset.batch()
-            self.network.train(self.sess, inputs, real_images)
+        for i in range(1, self.config.episodes):
+            for j in range(self.config.steps_per_episode):
+                inputs, real_images = self.dataset.batch()
+                self.env.reset(inputs)
+                self._sample()
+                self.network.train(self.sess, inputs, real_images)
 
-            if i % self.config.summary_interval == 0:
-                self._summary(i, inputs, real_images)
+                if i % self.config.summary_interval == 0:
+                    self._summary(i, inputs, real_images)
 
-            if i % self.config.save_interval == 0:
-                self._save(i)
+                if i % self.config.save_interval == 0:
+                    self._save(i)
+
+    def _sample(self):
+        action_probs = self.network.inference()
+        return np.argmax(action_probs)

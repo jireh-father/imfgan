@@ -4,10 +4,10 @@ import tensorflow as tf
 
 
 class Network:
-    def __init__(self, batch_size, input_height, input_width, real_height, real_width, learning_rate, optimizer,
+    def __init__(self, input_height, input_width, real_height, real_width, learning_rate, optimizer,
                  optimizer_param, is_training):
-        self.input_ph = tf.placeholder(tf.float32, [batch_size, input_height, input_width, 11])
-        self.real_image_ph = tf.placeholder(tf.float32, [batch_size, real_height, real_width, 3])
+        self.input_ph = tf.placeholder(tf.float32, [1, input_height, input_width, 11])
+        self.real_image_ph = tf.placeholder(tf.float32, [1, real_height, real_width, 3])
         self.learning_rate = learning_rate
         self.generator = Generator(self.input_ph, is_training, input_height, input_width, real_height, real_width)
         self.discriminator = Discriminator(is_training)
@@ -37,6 +37,9 @@ class Network:
     def train(self, sess, inputs, real_images):
         sess.run(self.discriminator_train_op, feed_dict={self.input_ph: inputs, self.real_image_ph: real_images})
         sess.run(self.generator_train_op, feed_dict={self.input_ph: inputs})
+
+    def inference(self, sess, inputs):
+        pass
 
     def _loss(self):
         self.discriminator_loss = tf.reduce_mean(self.real_logits - self.fake_logits)

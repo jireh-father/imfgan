@@ -63,5 +63,6 @@ class Discriminator:
 
             net = tf.layers.conv2d(net, 1, 4, strides=(2, 2), padding="SAME", name="d_conv5",
                                    kernel_initializer=kernel_initializer(), bias_initializer=bias_initializer())
-
+            print(net)
+            sys.exit()
             return net

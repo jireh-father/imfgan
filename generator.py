@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import tensorflow as tf
+import sys
 
 
 class Generator:
@@ -33,9 +34,8 @@ class Generator:
             net = tf.layers.conv2d(net, 256, [3, 3], name='conv5', padding='SAME', activation=tf.nn.relu,
                                    bias_initializer=bias_initializer(), kernel_regularizer=kernel_regularizer())
 
-            logits = tf.layers.conv2d(net, 1, [3, 3], name='conv6', padding='SAME', activation=tf.nn.sigmoid,
+            logits = tf.layers.conv2d(net, 2, [3, 3], name='conv6', padding='SAME', activation=tf.nn.sigmoid,
                                       bias_initializer=bias_initializer(), kernel_regularizer=kernel_regularizer())
-
             # print(net)
             # sys.exit()
             # net = tf.layers.max_pooling2d(net, [3, 3], 2, name='pool5')
@@ -53,10 +53,19 @@ class Generator:
             #                        bias_initializer=tf.zeros_initializer(), name='fc8', padding='SAME',
             #                        kernel_regularizer=kernel_regularizer())
             # logits = tf.squeeze(net, [1, 2], name='fc8/squeezed')
-            self._build_fake_image(inputs, logits, input_height, input_width, real_height, real_width)
+            self._build_fake_image(inputs, tf.nn.softmax(logits), input_height, input_width, real_height, real_width)
 
     def _build_fake_image(self, inputs, logits, input_height, input_width, output_height, output_width):
         bg, title, credit = tf.split(inputs, [3, 4, 4], 3)
+        title_logits, credit_logits = tf.split(logits, 2, 3)
+        print(title_logits)
+        title_start = tf.cast(tf.argmax(
+            tf.reshape(title_logits, [int(title_logits.get_shape()[1]) * int(title_logits.get_shape()[2])])), tf.int32)
+        title_start_y = tf.cast(title_start / int(title_logits.get_shape()[2]), tf.int32)
+        title_start_x = tf.cast(title_start - title_start_y * int(title_logits.get_shape()[2]), tf.int32)
+        print(title_start_y)
+        print(title_start_x)
+        sys.exit()
 
         bg_x = tf.cast(logits[0][0] * (input_width - output_width), tf.int32)
         bg_y = tf.cast(logits[0][1] * (input_height - output_height), tf.int32)
@@ -96,7 +105,9 @@ class Generator:
         # logits [batch, 10]
         bg_x = tf.cast(logits[0][0] * (input_width - output_width), tf.int32)
         bg_y = tf.cast(logits[0][1] * (input_height - output_height), tf.int32)
-        bg = tf.image.crop_to_bounding_box(bg, bg_y, bg_x, output_height, output_width)
+        print(bg, bg_y, bg_x, output_height, output_width)
+        bg = tf.image.crop_to_bounding_box(bg, bg_y, bg_x, tf.convert_to_tensor(output_height, tf.int32),
+                                           tf.convert_to_tensor(output_width, tf.int32))
 
         # title resize
         title_w = tf.cast(logits[0][4] * (output_width - 1) + 1, tf.int32)
