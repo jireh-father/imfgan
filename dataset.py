@@ -82,7 +82,7 @@ class Dataset:
                 resize_ratio = self.config.input_height / h
                 t_w = self.config.input_width * resize_ratio
                 t_h = self.config.input_height
-            img = img.resize(int((round(t_w)), int(round(t_h))), Image.ANTIALIAS)
+            img = img.resize((int(round(t_w)), int(round(t_h))), Image.ANTIALIAS)
 
         bg = Image.new('RGBA', (self.config.input_width, self.config.input_height), (0, 0, 0, 0))
         bg.paste(img, (0, 0))
