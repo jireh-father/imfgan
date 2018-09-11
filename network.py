@@ -14,10 +14,12 @@ class Network:
 
         self._generated_images = self.generator.generate()
         tf.summary.image("generated_image", self._generated_images)
+
         self.real_logits = self.discriminator.inference(self.real_image_ph, False)
         # self.fake_logits = self.discriminator.inference(self.real_image_ph)
 
         self.fake_logits = self.discriminator.inference(self._generated_images)
+        print(self.real_logits, self.fake_logits)
         self._loss()
 
         train_variables = tf.trainable_variables()
@@ -63,8 +65,6 @@ class Network:
             raise ValueError("Unknown optimizer %s" % optimizer_name)
 
     def _train(self, loss_val, var_list, optimizer):
-        print(loss_val)
-        print(var_list)
         grads = self.optimizer.compute_gradients(loss_val, var_list=var_list)
         print(grads)
         for grad, var in grads:

@@ -36,7 +36,7 @@ class Trainer:
         self.summary_writer.add_summary(summary_str, step)
 
     def _save(self, i):
-        self.saver.save(self.sess, self.config.log_dir + "model.ckpt", global_step=i)
+        self.saver.save(self.sess, self.config.log_dir + "/model.ckpt", global_step=i)
 
     def train(self):
         print("Train!!")
@@ -44,9 +44,9 @@ class Trainer:
             for j in range(self.config.steps_per_episode):
                 inputs, real_images = self.dataset.batch()
                 self.env.reset(inputs)
-                self._sample()
-                self.network.train(self.sess, inputs, real_images)
 
+                # self._sample()
+                self.network.train(self.sess, inputs, real_images)
                 if i % self.config.summary_interval == 0:
                     self._summary(i, inputs, real_images)
 

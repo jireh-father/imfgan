@@ -24,7 +24,7 @@ class Dataset:
         input_batch = []
         real_batch = []
         cnt = 0
-        while self.config.batch_size >= cnt:
+        while self.config.batch_size > cnt:
             try:
                 if self.config.dataset_preload:
                     poster = random.choice(self.posters)
@@ -32,25 +32,37 @@ class Dataset:
                     title = random.choice(self.titles)
                     credit = random.choice(self.credits)
                 else:
-                    poster = self._open_and_resize(random.choice(self.poster_files))
-                    bg = self._open_and_resize(random.choice(self.bg_files))
+                    poster = self._open_and_resize(random.choice(self.poster_files), self.config.real_width,
+                                                   self.config.real_height)
+                    bg = self._open_and_resize(random.choice(self.bg_files), self.config.input_width,
+                                               self.config.input_height)
                     title = self._open_and_resize_with_padding(random.choice(self.title_files))
                     credit = self._open_and_resize_with_padding(random.choice(self.credit_files))
+                if len(bg.shape) != 3 or bg.shape[2] != 3:
+                    continue
+                if len(title.shape) != 3 or title.shape[2] != 4:
+                    continue
+                if len(credit.shape) != 3 or credit.shape[2] != 4:
+                    continue
+                if len(poster.shape) != 3 or poster.shape[2] != 3:
+                    continue
                 image_input = np.concatenate((bg, title, credit), axis=2)
 
                 input_batch.append(image_input)
                 real_batch.append(poster)
                 cnt += 1
             except:
+                import traceback
+                traceback.print_exc()
                 continue
         if cnt < 1:
             raise Exception("failed to get batch data.")
         return np.array(input_batch), np.array(real_batch)
 
-    def _open_and_resize(self, image_file):
+    def _open_and_resize(self, image_file, width, height):
         img = Image.open(image_file)
-        img = np.array(img.resize((self.config.input_width, self.config.input_height), Image.ANTIALIAS))
-        img /= 255
+        img = np.array(img.resize((width, height), Image.ANTIALIAS))
+        img = img / 255.
         return (img - 0.5) * 2
 
     def _open_and_resize_with_padding(self, image_file):
@@ -70,13 +82,13 @@ class Dataset:
                 resize_ratio = self.config.input_height / h
                 t_w = self.config.input_width * resize_ratio
                 t_h = self.config.input_height
-            img = img.resize((t_w, t_h), Image.ANTIALIAS)
+            img = img.resize((round(t_w), round(t_h)), Image.ANTIALIAS)
 
         bg = Image.new('RGBA', (self.config.input_width, self.config.input_height), (0, 0, 0, 0))
         bg.paste(img, (0, 0))
 
         img = np.array(bg)
-        img /= 255
+        img = img / 255.
         return (img - 0.5) * 2
 
     def _preload(self, files, dataset, is_text=False):
