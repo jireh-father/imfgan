@@ -11,7 +11,8 @@ class Trainer:
         self.dataset = Dataset(config)
         self.env = Env()
         self.network = Network(config.input_height, config.input_width, config.real_height, config.real_width,
-                               config.learning_rate, config.optimizer, config.optimizer_param, config.is_training)
+                               config.learning_rate, config.optimizer, config.optimizer_param, config.is_training,
+                               config.use_wloss)
 
         self._init_session()
 

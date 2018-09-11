@@ -5,7 +5,7 @@ import tensorflow as tf
 
 class Network:
     def __init__(self, input_height, input_width, real_height, real_width, learning_rate, optimizer,
-                 optimizer_param, is_training):
+                 optimizer_param, is_training, w_loss=True):
         self.input_ph = tf.placeholder(tf.float32, [1, input_height, input_width, 11])
         self.real_image_ph = tf.placeholder(tf.float32, [1, real_height, real_width, 3])
         self.learning_rate = learning_rate
@@ -20,7 +20,10 @@ class Network:
 
         self.fake_logits = self.discriminator.inference(self._generated_images)
         print(self.real_logits, self.fake_logits)
-        self._loss()
+        if w_loss:
+            self._wloss()
+        else:
+            self._normal_loss()
 
         train_variables = tf.trainable_variables()
         for v in train_variables:
@@ -43,10 +46,33 @@ class Network:
     def inference(self, sess, inputs):
         pass
 
-    def _loss(self):
+    def _wloss(self):
         self.discriminator_loss = tf.reduce_mean(self.real_logits - self.fake_logits)
         self.generator_loss = tf.reduce_mean(self.fake_logits)
 
+        tf.summary.scalar("Discriminator_loss", self.discriminator_loss)
+        tf.summary.scalar("Generator_loss", self.generator_loss)
+
+    def _cross_entropy_loss(self, logits, labels, name="x_entropy"):
+        xentropy = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=labels))
+        tf.summary.scalar(name, xentropy)
+        return xentropy
+
+    def _normal_loss(self):
+        discriminator_loss_real = self._cross_entropy_loss(self.real_logits, tf.ones_like(self.real_logits),
+                                                           name="disc_real_loss")
+
+        discriminator_loss_fake = self._cross_entropy_loss(self.fake_logits, tf.zeros_like(self.fake_logits),
+                                                           name="disc_fake_loss")
+        self.discriminator_loss = discriminator_loss_fake + discriminator_loss_real
+
+        gen_loss_disc = self._cross_entropy_loss(self.fake_logits, tf.ones_like(self.fake_logits), name="gen_disc_loss")
+        # if use_features:
+        #     gen_loss_features = tf.reduce_mean(tf.nn.l2_loss(feature_real - feature_fake)) / (self.crop_image_size ** 2)
+        # else:
+        #     gen_loss_features = 0
+        # self.gen_loss = gen_loss_disc + 0.1 * gen_loss_features
+        self.generator_loss = gen_loss_disc
         tf.summary.scalar("Discriminator_loss", self.discriminator_loss)
         tf.summary.scalar("Generator_loss", self.generator_loss)
 
