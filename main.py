@@ -19,6 +19,7 @@ tf.flags.DEFINE_string("log_dir", "logs", "path to logs directory")
 tf.flags.DEFINE_string("checkpoint_dir", None, "checkpoint dir")
 tf.flags.DEFINE_integer("episodes", 1000, "No. of episodes to train model")
 tf.flags.DEFINE_integer("steps_per_episode", 2, "steps per a episode")
+tf.flags.DEFINE_integer("batch_size", 1, "F:\develop\imfgan\main.py")
 tf.flags.DEFINE_boolean("dataset_preload", True, "dataset memory load")
 
 tf.flags.DEFINE_boolean("is_training", True, "is trainig")

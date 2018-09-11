@@ -7,7 +7,6 @@ import numpy as np
 
 class Trainer:
     def __init__(self, config):
-        config.batch_size = 1
         self.config = config
         self.dataset = Dataset(config)
         self.env = Env()

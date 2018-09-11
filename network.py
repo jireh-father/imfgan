@@ -14,9 +14,9 @@ class Network:
 
         self._generated_images = self.generator.generate()
         tf.summary.image("generated_image", self._generated_images)
-
         self.real_logits = self.discriminator.inference(self.real_image_ph, False)
         # self.fake_logits = self.discriminator.inference(self.real_image_ph)
+
         self.fake_logits = self.discriminator.inference(self._generated_images)
         self._loss()
 
