@@ -24,7 +24,7 @@ class Trainer:
 
         self.sess.run(tf.initialize_all_variables())
         if self.config.checkpoint_dir:
-            ckpt = tf.train.get_checkpoint_state(self.config.log_dir)
+            ckpt = tf.train.get_checkpoint_state(self.config.checkpoint_dir)
             if ckpt and ckpt.model_checkpoint_path:
                 self.saver.restore(self.sess, ckpt.model_checkpoint_path)
                 print("Model restored")
