@@ -12,7 +12,7 @@ tf.flags.DEFINE_integer("real_height", 200, "real_height")
 tf.flags.DEFINE_integer("summary_interval", 10, "summary_interval")
 tf.flags.DEFINE_integer("save_interval", 1000, "save_interval")
 
-tf.flags.DEFINE_float("learning_rate", "2e-5", "Learning rate for Adam Optimizer")
+tf.flags.DEFINE_float("learning_rate", 0.01, "Learning rate for Adam Optimizer")
 tf.flags.DEFINE_float("optimizer_param", "0.5", "beta1 for Adam optimizer / decay for RMSProp")
 tf.flags.DEFINE_string("optimizer", "Adam", "Optimizer to use for training")
 tf.flags.DEFINE_string("log_dir", "logs2", "path to logs directory")

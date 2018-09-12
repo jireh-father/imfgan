@@ -8,7 +8,10 @@ from tf_utils import weight_variable, bias_variable, dense_to_one_hot
 
 class Generator:
     def __init__(self, inputs, is_training, input_height, input_width, real_height, real_width, num_classes=10,
-                 mode=2):
+                 mode=1):
+        self.bg_transform = None
+        self.title_transform = None
+        self.credit_transform = None
         with tf.variable_scope("generator"):
             print(inputs)
             if mode == 1:
@@ -18,9 +21,19 @@ class Generator:
                                                                                            real_width)
             else:
                 bg, title, credit = tf.split(inputs, [3, 4, 4], 3)
+
+                tf.summary.image("bg", bg, max_outputs=10)
+                tf.summary.image("title", title, max_outputs=10)
+                tf.summary.image("credit", credit, max_outputs=10)
                 bg_transform = self.transform(bg, real_height, real_width)
                 title_transform = self.transform(title, real_height, real_width)
                 credit_transform = self.transform(credit, real_height, real_width)
+            self.bg_transform = bg_transform
+            self.title_transform = title_transform
+            self.credit_transform = credit_transform
+            tf.summary.image("bg_transform", bg_transform, max_outputs=10)
+            tf.summary.image("title_transform", title_transform, max_outputs=10)
+            tf.summary.image("credit_transform", credit_transform, max_outputs=10)
 
             title_rgb, title_a = tf.split(title_transform, [3, 1], 3)
             title_rgb = title_rgb * title_a
@@ -78,6 +91,9 @@ class Generator:
         net = tf.layers.dense(net, 18, activation=tf.nn.tanh, bias_initializer=tf.initializers.constant(initial))
 
         bg, title, credit = tf.split(inputs, [3, 4, 4], 3)
+        tf.summary.image("bg", bg, max_outputs=10)
+        tf.summary.image("title", title, max_outputs=10)
+        tf.summary.image("credit", credit, max_outputs=10)
         bg_p, title_p, credit_p = tf.split(net, 3, 1)
         bg_trans = transformer(bg, bg_p, (out_height, out_width))
         title_trans = transformer(title, title_p, (out_height, out_width))
@@ -104,6 +120,9 @@ class Generator:
         net = tf.layers.dense(net, 18, activation=tf.nn.tanh, bias_initializer=tf.initializers.constant(initial))
 
         bg, title, credit = tf.split(inputs, [3, 4, 4], 3)
+        tf.summary.image("bg", bg, max_outputs=10)
+        tf.summary.image("title", title, max_outputs=10)
+        tf.summary.image("credit", credit, max_outputs=10)
         bg_p, title_p, credit_p = tf.split(net, 3, 1)
         bg_p[1] = 0
         bg_p[3] = 0

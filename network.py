@@ -9,16 +9,19 @@ class Network:
         self.input_ph = tf.placeholder(tf.float32, [1, input_height, input_width, 11])
         self.real_image_ph = tf.placeholder(tf.float32, [1, real_height, real_width, 3])
         self.learning_rate = learning_rate
-        self.generator = Generator(self.input_ph, is_training, input_height, input_width, real_height, real_width)
-        self.discriminator = Discriminator(is_training)
 
-        self._generated_images = self.generator.generate()
-        tf.summary.image("generated_image", self._generated_images)
+        self.generator = Generator(self.input_ph, is_training, input_height, input_width, real_height, real_width)
+        self.generated_images = self.generator.generate()
+        tf.summary.image("generated_image", self.generated_images, max_outputs=10)
+
+        if not is_training:
+            return
+        self.discriminator = Discriminator(is_training)
 
         self.real_logits = self.discriminator.inference(self.real_image_ph, False)
         # self.fake_logits = self.discriminator.inference(self.real_image_ph)
 
-        self.fake_logits = self.discriminator.inference(self._generated_images)
+        self.fake_logits = self.discriminator.inference(self.generated_images)
         print(self.real_logits, self.fake_logits)
         if w_loss:
             self._wloss()
@@ -38,6 +41,12 @@ class Network:
 
         self.generator_train_op = self._train(self.generator_loss, self.generator_variables, self.optimizer)
         self.discriminator_train_op = self._train(self.discriminator_loss, self.discriminator_variables, self.optimizer)
+
+    def eval(self, sess, inputs):
+        return sess.run([self.generated_images,
+                         self.generator.bg_transform,
+                         self.generator.title_transform,
+                         self.generator.credit_transform], feed_dict={self.input_ph: inputs})
 
     def train(self, sess, inputs, real_images):
         sess.run(self.discriminator_train_op, feed_dict={self.input_ph: inputs, self.real_image_ph: real_images})
