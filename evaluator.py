@@ -13,7 +13,7 @@ class Evaluator:
         self.dataset = Dataset(config)
         self.env = Env()
         self.network = Network(config.input_height, config.input_width, config.real_height, config.real_width,
-                               None, None, None, False)
+                               None, None, None, False, transform_mode=config.transform_mode)
 
         self._init_session()
 
@@ -31,9 +31,13 @@ class Evaluator:
                 print("Model restored")
 
     def _summary(self, step, inputs, real_images):
-        summary_str = self.sess.run(self.summary_op,
-                                    feed_dict={self.network.input_ph: inputs, self.network.real_image_ph: real_images})
+        summary_str, lo, fl = self.sess.run([self.summary_op, self.network.generator.localization,
+                                             self.network.fake_logits],
+                                            feed_dict={self.network.input_ph: inputs,
+                                                       self.network.real_image_ph: real_images})
         print("Step: %d" % step)
+        print("localization", lo)
+        print("fake_logits", fl)
         self.summary_writer.add_summary(summary_str, step)
 
     def eval(self):
@@ -44,29 +48,33 @@ class Evaluator:
 
         for i in range(1, self.config.eval_cnt):
             inputs, real_images = self.dataset.batch()
-            self.env.reset(inputs)
 
             # self._sample()
             result = self.network.eval(self.sess, inputs)
-            img = Image.fromarray(result[0][0], "RGB")
-            img.save(os.path.join(test_img_path, "%d_%s.jpg" % (i, "gen")))
-            img = Image.fromarray(result[1][0], "RGB")
-            img.save(os.path.join(test_img_path, "%d_%s.jpg" % (i, "bg")))
-            img = Image.fromarray(result[2][0], "RGBA")
-            img.save(os.path.join(test_img_path, "%d_%s.png" % (i, "title")))
-            img = Image.fromarray(result[3][0], "RGBA")
-            img.save(os.path.join(test_img_path, "%d_%s.png" % (i, "credit")))
-            ori = np.split(inputs, [3, 4, 4], 3)
-            print(ori[0].shape)
-            print(ori[1].shape)
-            print(ori[2].shape)
-            sys.exit()
-            img = Image.fromarray(ori[0][0], "RGB")
-            img.save(os.path.join(test_img_path, "%d_%s.jpg" % (i, "bg_ori")))
-            img = Image.fromarray(ori[0][1], "RGBA")
-            img.save(os.path.join(test_img_path, "%d_%s.png" % (i, "title_ori")))
-            img = Image.fromarray(ori[0][2], "RGBA")
-            img.save(os.path.join(test_img_path, "%d_%s.png" % (i, "credit_ori")))
+            self._summary(i, inputs, real_images)
+            # print(result[0])
+            # sys.exit()
+            # ii = (result[0][0] - result[0][0].min()) / (result[0][0].max() - result[0][0].min()) * 255
+            # img = Image.fromarray(ii, "RGB")
+            # img.save(os.path.join(test_img_path, "%d_%s.jpg" % (i, "gen")))
+            # ii = (result[1][0] - result[1][0].min()) / (result[1][0].max() - result[1][0].min()) * 255
+            # img = Image.fromarray(ii, "RGB")
+            # img.save(os.path.join(test_img_path, "%d_%s.jpg" % (i, "bg")))
+            #
+            # ii = (result[2][0] - result[2][0].min()) / (result[2][0].max() - result[2][0].min()) * 255
+            # img = Image.fromarray(ii, "RGBA")
+            # img.save(os.path.join(test_img_path, "%d_%s.png" % (i, "title")))
+            #
+            # ii = (result[2][0] - result[2][0].min()) / (result[2][0].max() - result[2][0].min()) * 255
+            # img = Image.fromarray(ii, "RGBA")
+            # img.save(os.path.join(test_img_path, "%d_%s.png" % (i, "credit")))
+            # ori = np.split(inputs, [3, 7, 11], 3)
+            # img = Image.fromarray(ori[0][0], "RGB")
+            # img.save(os.path.join(test_img_path, "%d_%s.jpg" % (i, "bg_ori")))
+            # img = Image.fromarray(ori[1][0], "RGBA")
+            # img.save(os.path.join(test_img_path, "%d_%s.png" % (i, "title_ori")))
+            # img = Image.fromarray(ori[2][0], "RGBA")
+            # img.save(os.path.join(test_img_path, "%d_%s.png" % (i, "credit_ori")))
 
     def _sample(self):
         action_probs = self.network.inference()

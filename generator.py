@@ -12,6 +12,7 @@ class Generator:
         self.bg_transform = None
         self.title_transform = None
         self.credit_transform = None
+        self.localization = None
         with tf.variable_scope("generator"):
             print(inputs)
             if mode == 1:
@@ -68,7 +69,9 @@ class Generator:
         initial = initial.astype('float32')
         initial = initial.flatten()
         net = tf.layers.dense(net, 6, activation=tf.nn.tanh, bias_initializer=tf.initializers.constant(initial))
-
+        self.localization = net
+        for i in range(6):
+            tf.summary.scalar("param%d" % i, net[0][i])
         return transformer(inputs, net, (out_height, out_width))
 
     def transform_mixed(self, inputs, out_height, out_width):
@@ -89,7 +92,9 @@ class Generator:
         initial = initial.flatten()
 
         net = tf.layers.dense(net, 18, activation=tf.nn.tanh, bias_initializer=tf.initializers.constant(initial))
-
+        self.localization = net
+        for i in range(18):
+            tf.summary.scalar("param%d" % i, net[0][i])
         bg, title, credit = tf.split(inputs, [3, 4, 4], 3)
         tf.summary.image("bg", bg, max_outputs=10)
         tf.summary.image("title", title, max_outputs=10)
@@ -113,29 +118,21 @@ class Generator:
         net = tf.reduce_mean(net, [1, 2], name='global_pool')
         net = tf.layers.dense(net, 36, activation=tf.nn.tanh)
         net = tf.layers.dropout(net, 0.8)
-        initial = np.array([[1., 0, 0], [0, 1., 0], [1., 0, 0], [0, 1., 0], [1., 0, 0], [0, 1., 0]])
-        initial = initial.astype('float32')
-        initial = initial.flatten()
 
-        net = tf.layers.dense(net, 18, activation=tf.nn.tanh, bias_initializer=tf.initializers.constant(initial))
-
+        net = tf.layers.dense(net, 18, activation=tf.nn.tanh)
+        self.localization = net
+        for i in range(18):
+            tf.summary.scalar("param%d" % i, net[0][i])
         bg, title, credit = tf.split(inputs, [3, 4, 4], 3)
         tf.summary.image("bg", bg, max_outputs=10)
         tf.summary.image("title", title, max_outputs=10)
         tf.summary.image("credit", credit, max_outputs=10)
         bg_p, title_p, credit_p = tf.split(net, 3, 1)
-        bg_p[1] = 0
-        bg_p[3] = 0
-        bg_p[4] = bg_p[0]
-        title_p[1] = 0
-        title_p[3] = 0
-        title_p[4] = title_p[0]
-        credit_p[1] = 0
-        credit_p[3] = 0
-        credit_p[4] = credit_p[0]
-        bg_trans = transformer(bg, bg_p, (out_height, out_width))
-        title_trans = transformer(title, title_p, (out_height, out_width))
-        credit_trans = transformer(credit, credit_p, (out_height, out_width))
+        cont_p = tf.constant([[1., 0, 1., 0., 1., 1.]], tf.float32, shape=[1, 6])
+
+        bg_trans = transformer(bg, tf.multiply(bg_p, cont_p), (out_height, out_width))
+        title_trans = transformer(title, tf.multiply(title_p, cont_p), (out_height, out_width))
+        credit_trans = transformer(credit, tf.multiply(credit_p, cont_p), (out_height, out_width))
         return bg_trans, title_trans, credit_trans
 
     def generate(self):

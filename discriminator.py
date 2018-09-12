@@ -61,8 +61,10 @@ class Discriminator:
             # net = batch_norm(net, 512, self.is_training, scope="disc_bn3")
             net = leaky_relu(net)
 
-            net = tf.layers.conv2d(net, 1, 4, strides=(2, 2), padding="SAME", name="d_conv5",
+            net = tf.layers.conv2d(net, 2, 4, strides=(2, 2), padding="SAME", name="d_conv5",
                                    kernel_initializer=kernel_initializer(), bias_initializer=bias_initializer())
+
+            net = tf.reduce_mean(net, [1, 2], name='global_pool')
             print(net)
             # sys.exit()
             return net

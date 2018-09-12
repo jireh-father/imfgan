@@ -12,7 +12,7 @@ class Trainer:
         self.env = Env()
         self.network = Network(config.input_height, config.input_width, config.real_height, config.real_width,
                                config.learning_rate, config.optimizer, config.optimizer_param, config.is_training,
-                               config.use_wloss)
+                               config.use_wloss, transform_mode=config.transform_mode)
 
         self._init_session()
 
@@ -30,10 +30,15 @@ class Trainer:
                 print("Model restored")
 
     def _summary(self, step, inputs, real_images):
-        g_loss_val, d_loss_val, summary_str = self.sess.run(
-            [self.network.generator_loss, self.network.discriminator_loss, self.summary_op],
+        g_loss_val, d_loss_val, summary_str, lo, fl, rl = self.sess.run(
+            [self.network.generator_loss, self.network.discriminator_loss, self.summary_op,
+             self.network.generator.localization,
+             self.network.fake_logits, self.network.real_logits],
             feed_dict={self.network.input_ph: inputs, self.network.real_image_ph: real_images})
         print("Step: %d, generator loss: %g, discriminatorloss: %g" % (step, g_loss_val, d_loss_val))
+        print("localization", lo)
+        print("fake_logits", fl)
+        print("real_logits", rl)
         self.summary_writer.add_summary(summary_str, step)
 
     def _save(self, i):

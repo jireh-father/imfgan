@@ -11,9 +11,10 @@ tf.flags.DEFINE_integer("real_width", 150, "real_width")
 tf.flags.DEFINE_integer("real_height", 200, "real_height")
 tf.flags.DEFINE_integer("eval_cnt", 100, "eval count")
 tf.flags.DEFINE_integer("batch_size", 1, "F:\develop\imfgan\main.py")
-tf.flags.DEFINE_string("log_dir", "eval_log", "path to logs directory")
+tf.flags.DEFINE_string("log_dir", "eval_log4", "path to logs directory")
 tf.flags.DEFINE_boolean("dataset_preload", False, "dataset memory load")
 tf.flags.DEFINE_string("checkpoint_dir", "cp", "checkpoint dir")
+tf.flags.DEFINE_integer("transform_mode", 1, "transform_mode")
 
 FLAGS = tf.flags.FLAGS
 

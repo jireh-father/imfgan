@@ -5,24 +5,27 @@ import tensorflow as tf
 
 class Network:
     def __init__(self, input_height, input_width, real_height, real_width, learning_rate, optimizer,
-                 optimizer_param, is_training, w_loss=True):
+                 optimizer_param, is_training, w_loss=True, transform_mode=1):
         self.input_ph = tf.placeholder(tf.float32, [1, input_height, input_width, 11])
         self.real_image_ph = tf.placeholder(tf.float32, [1, real_height, real_width, 3])
         self.learning_rate = learning_rate
 
-        self.generator = Generator(self.input_ph, is_training, input_height, input_width, real_height, real_width)
+        self.generator = Generator(self.input_ph, is_training, input_height, input_width, real_height, real_width,
+                                   mode=transform_mode)
         self.generated_images = self.generator.generate()
         tf.summary.image("generated_image", self.generated_images, max_outputs=10)
 
-        if not is_training:
-            return
         self.discriminator = Discriminator(is_training)
 
-        self.real_logits = self.discriminator.inference(self.real_image_ph, False)
+        self.fake_logits = self.discriminator.inference(self.generated_images, False)
+        tf.summary.histogram("fake_logits", self.fake_logits)
+        if not is_training:
+            return
+
+        self.real_logits = self.discriminator.inference(self.real_image_ph)
+        tf.summary.histogram("real_logits", self.real_logits)
         # self.fake_logits = self.discriminator.inference(self.real_image_ph)
 
-        self.fake_logits = self.discriminator.inference(self.generated_images)
-        print(self.real_logits, self.fake_logits)
         if w_loss:
             self._wloss()
         else:
