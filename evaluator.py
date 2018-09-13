@@ -31,13 +31,14 @@ class Evaluator:
                 print("Model restored")
 
     def _summary(self, step, inputs, real_images):
-        summary_str, lo, fl = self.sess.run([self.summary_op, self.network.generator.localization,
-                                             self.network.fake_logits],
-                                            feed_dict={self.network.input_ph: inputs,
-                                                       self.network.real_image_ph: real_images})
+        summary_str, lo, fl, theta = self.sess.run([self.summary_op, self.network.generator.localization,
+                                                    self.network.fake_logits, self.network.generator.theta],
+                                                   feed_dict={self.network.input_ph: inputs,
+                                                              self.network.real_image_ph: real_images})
         print("Step: %d" % step)
         print("localization", lo)
         print("fake_logits", fl)
+        print("theta", theta)
         self.summary_writer.add_summary(summary_str, step)
 
     def eval(self):

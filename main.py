@@ -22,7 +22,7 @@ tf.flags.DEFINE_integer("steps_per_episode", 1, "steps per a episode")
 tf.flags.DEFINE_integer("batch_size", 1, "F:\develop\imfgan\main.py")
 tf.flags.DEFINE_boolean("dataset_preload", False, "dataset memory load")
 tf.flags.DEFINE_boolean("use_wloss", False, "use_wloss")
-tf.flags.DEFINE_integer("transform_mode", 2, "transform_mode")
+tf.flags.DEFINE_integer("transform_mode", 3, "transform_mode")
 
 tf.flags.DEFINE_boolean("is_training", True, "is trainig")
 
