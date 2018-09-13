@@ -30,23 +30,24 @@ class Dataset:
                     poster = random.choice(self.posters)
                     bg = random.choice(self.bgs)
                     title = random.choice(self.titles)
-                    credit = random.choice(self.credits)
+                    # credit = random.choice(self.credits)
                 else:
                     poster = self._open_and_resize(random.choice(self.poster_files), self.config.real_width,
                                                    self.config.real_height)
                     bg = self._open_and_resize(random.choice(self.bg_files), self.config.input_width,
                                                self.config.input_height)
                     title = self._open_and_resize_with_padding(random.choice(self.title_files))
-                    credit = self._open_and_resize_with_padding(random.choice(self.credit_files))
+                    # credit = self._open_and_resize_with_padding(random.choice(self.credit_files))
                 if len(bg.shape) != 3 or bg.shape[2] != 3:
                     continue
                 if len(title.shape) != 3 or title.shape[2] != 4:
                     continue
-                if len(credit.shape) != 3 or credit.shape[2] != 4:
-                    continue
+                # if len(credit.shape) != 3 or credit.shape[2] != 4:
+                #     continue
                 if len(poster.shape) != 3 or poster.shape[2] != 3:
                     continue
-                image_input = np.concatenate((bg, title, credit), axis=2)
+                # image_input = np.concatenate((bg, title, credit), axis=2)
+                image_input = np.concatenate((bg, title), axis=2)
 
                 input_batch.append(image_input)
                 real_batch.append(poster)

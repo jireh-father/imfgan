@@ -6,7 +6,8 @@ import tensorflow as tf
 class Network:
     def __init__(self, input_height, input_width, real_height, real_width, learning_rate, optimizer,
                  optimizer_param, is_training, w_loss=True, transform_mode=1):
-        self.input_ph = tf.placeholder(tf.float32, [1, input_height, input_width, 11])
+        # self.input_ph = tf.placeholder(tf.float32, [1, input_height, input_width, 11])
+        self.input_ph = tf.placeholder(tf.float32, [1, input_height, input_width, 7])
         self.real_image_ph = tf.placeholder(tf.float32, [1, real_height, real_width, 3])
         self.learning_rate = learning_rate
 
