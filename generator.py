@@ -99,7 +99,7 @@ class Generator:
         net = tf.layers.dense(net, 36, activation=tf.nn.tanh)
         net = tf.layers.dropout(net, 0.8)
         # initial = np.array([[1., 0, 0], [0, 1., 0], [1., 0, 0], [0, 1., 0], [1., 0, 0], [0, 1., 0]])
-        initial = np.array([[1., 0, 0], [0, 1., 0], [1., 0, 0], [0, 1., 0]])
+        initial = np.array([[1., 0, 0], [0, 1., 0]])
         initial = initial.astype('float32')
         initial = initial.flatten()
 
@@ -196,7 +196,7 @@ class Generator:
         # bg_p, title_p = tf.split(net, 2, 1)
         mul_c = tf.constant([[0., 0., 0., 0., 1., 1.]], tf.float32, shape=[1, 6])
         add_c = tf.constant([[1., 0., 1., 0., 0., 0.]], tf.float32, shape=[1, 6])
-        theta = net * mul_c + add_c * net[0][0]
+        theta = net * mul_c + add_c * tf.nn.relu(net[0][0])
         self.theta = theta
         # bg_trans = transformer(bg, tf.multiply(bg_p, cont_p), (out_height, out_width))
         title_trans = transformer(title, theta, (out_height, out_width))
